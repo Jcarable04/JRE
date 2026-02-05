@@ -1,0 +1,84 @@
+{
+  "employees": [
+    {
+      "id": 1,
+      "name": "Employee 1",
+      "type": "rotation",
+      "shifts": ["day", "night", "off"],
+      "currentShift": "day",
+      "notes": ""
+    },
+    {
+      "id": 2,
+      "name": "Employee 2",
+      "type": "rotation",
+      "shifts": ["day", "night", "off"],
+      "currentShift": "night",
+      "notes": ""
+    },
+    {
+      "id": 3,
+      "name": "Employee 3",
+      "type": "rotation",
+      "shifts": ["day", "night", "off"],
+      "currentShift": "off",
+      "notes": ""
+    },
+    {
+      "id": 4,
+      "name": "Employee 4",
+      "type": "rotation",
+      "shifts": ["day", "night", "off"],
+      "currentShift": "day",
+      "notes": ""
+    },
+    {
+      "id": 5,
+      "name": "Employee 5",
+      "type": "rotation",
+      "shifts": ["day", "night", "off"],
+      "currentShift": "night",
+      "notes": ""
+    },
+    {
+      "id": 6,
+      "name": "Employee 6",
+      "type": "rotation",
+      "shifts": ["day", "night", "off"],
+      "currentShift": "off",
+      "notes": ""
+    },
+    {
+      "id": 7,
+      "name": "Sunday Only",
+      "type": "sunday_only",
+      "shifts": ["day"],
+      "currentShift": "day",
+      "notes": "Works only on Sundays"
+    },
+    {
+      "id": 8,
+      "name": "Day Shift Only",
+      "type": "day_only",
+      "shifts": ["day"],
+      "currentShift": "day",
+      "notes": "Works only day shifts"
+    }
+  ],
+  "schedule": [],
+  "rotationPattern": [
+    { "order": 1, "shift": "day" },
+    { "order": 2, "shift": "day" },
+    { "order": 3, "shift": "night" },
+    { "order": 4, "shift": "night" },
+    { "order": 5, "shift": "off" },
+    { "order": 6, "shift": "off" }
+  ],
+  "settings": {
+    "dayShiftHours": "07:00-19:00",
+    "nightShiftHours": "19:00-07:00",
+    "rotationDays": 4,
+    "sundayEmployeeId": 7,
+    "dayOnlyEmployeeId": 8
+  }
+}
