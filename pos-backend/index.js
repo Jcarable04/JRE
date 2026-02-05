@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -1069,6 +1070,10 @@ app.get('/companies/:id/stats', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch statistics' });
   }
 });
+app.use(express.static(path.join(__dirname, '../pos-frontend')));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../pos-frontend/index.html'));
+});
 
 // Get global inventory statistics
 app.get('/inventory/stats', async (req, res) => {
@@ -1354,12 +1359,12 @@ app.get('/debug/companies', async (req, res) => {
   }
 });
 // Start server
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📦 Products: http://localhost:${PORT}/products`);
   console.log(`💰 Sales: http://localhost:${PORT}/sales`);
-    console.log(`🏢 Inventory API: http://localhost:${PORT}/companies`);
+  console.log(`🏢 Inventory API: http://localhost:${PORT}/companies`);
   console.log(`🧪 Sales Test: http://localhost:${PORT}/sales-test`);
-  console.log(`🔍 Check Tables: http://localhost:${PORT}/check-tables`);
+  console.log(`🔍 Check Tables: http://localhost:${PORT}/debug/db-status`);
 });
