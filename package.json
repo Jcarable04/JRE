@@ -1,0 +1,9 @@
+{
+  "name": "jre-root",
+  "private": true,
+  "scripts": {
+    "start": "cd pos-backend && yarn start",
+    "build": "cd pos-backend && yarn",
+    "install": "cd pos-backend && yarn"
+  }
+}
