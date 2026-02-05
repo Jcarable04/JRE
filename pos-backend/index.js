@@ -11,10 +11,10 @@ app.use(express.json());
 
 // MySQL connection
 const db = mysql.createPool({
-  host: process.env.DB_HOST || 'sql210.infinityfree.com',
-  user: process.env.DB_USER || 'if0_40493128',
-  password: process.env.DB_PASS || 'WVigmt4WwfFL',
-  database: process.env.DB_NAME || 'if0_40493128_pos_db',
+  host: process.env.DB_HOST || 'sql12.freesqldatabase.com',
+  user: process.env.DB_USER || 'sql12816262',
+  password: process.env.DB_PASS || 'Lktrn6vVJs',
+  database: process.env.DB_NAME || 'sql12816262',
   port: process.env.DB_PORT || 3306,
   waitForConnections: true,
   connectionLimit: 10,
