@@ -1247,12 +1247,12 @@ app.get('/debug/companies', async (req, res) => {
   }
 });
 
-// FIXED: Only ONE catch-all route at the end
+// ========== FIXED CATCH-ALL ROUTE ==========
 // Serve frontend files
 app.use(express.static(path.join(__dirname, '../pos-frontend')));
 
-// Catch-all route for SPA - FIXED: Only one instance
-app.get('/:path(*)', (req, res) => {
+// FIX: Use a simple regex pattern that works with all Express versions
+app.get(/^\/(?!api|products|sales|companies|inventory|debug|dashboard|sale-details).*$/, (req, res) => {
   res.sendFile(path.join(__dirname, '../pos-frontend/index.html'));
 });
 
