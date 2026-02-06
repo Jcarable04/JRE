@@ -39,13 +39,50 @@ app.get('/', (req, res) => {
 });
 
 // Get all products
+// Get all products - ENHANCED VERSION
 app.get('/products', async (req, res) => {
+  console.log('📦 GET /products called');
+  
   try {
-    const [rows] = await db.query('SELECT * FROM products');
+    // Test connection first
+    const connection = await db.getConnection();
+    console.log('✅ Database connection acquired');
+    connection.release();
+    
+    // Query products
+    console.log('🔍 Querying products table...');
+    const [rows] = await db.query('SELECT * FROM products ORDER BY id DESC');
+    console.log(`✅ Found ${rows.length} products`);
+    
+    if (rows.length === 0) {
+      // Table exists but empty
+      return res.json({
+        message: 'No products found. Table is empty.',
+        suggestion: 'Add products using POST /products or visit /debug/create-products-table',
+        products: []
+      });
+    }
+    
     res.json(rows);
+    
   } catch (err) {
-    console.error('GET /products Error:', err.message);
-    res.status(500).json({ error: 'Failed to fetch products' });
+    console.error('❌ GET /products Error:', err.message);
+    console.error('Full error:', err);
+    
+    // Check specific error types
+    if (err.code === 'ER_NO_SUCH_TABLE') {
+      return res.status(500).json({ 
+        error: 'products table does not exist',
+        solution: 'Visit /debug/create-products-table to create it',
+        mysql_code: err.code
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Failed to fetch products',
+      details: err.message,
+      mysql_code: err.code
+    });
   }
 });
 
@@ -1247,8 +1284,154 @@ app.get('/debug/companies', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+// ========== DEBUG & FIX PRODUCTS TABLE ==========
 
-// ========== FIXED FRONTEND SERVING ==========
+// Debug: Check products table
+app.get('/debug/check-products', async (req, res) => {
+  try {
+    // Check if table exists
+    const [tables] = await db.query("SHOW TABLES LIKE 'products'");
+    
+    if (tables.length === 0) {
+      return res.json({ 
+        error: 'products table does not exist',
+        suggestion: 'Visit /debug/create-products-table to create it' 
+      });
+    }
+    
+    // Check table structure
+    const [columns] = await db.query("SHOW COLUMNS FROM products");
+    
+    // Count rows
+    const [count] = await db.query("SELECT COUNT(*) as total FROM products");
+    
+    // Get sample data
+    const [sample] = await db.query("SELECT * FROM products LIMIT 5");
+    
+    res.json({
+      tableExists: true,
+      columnCount: columns.length,
+      columns: columns.map(c => ({
+        name: c.Field,
+        type: c.Type,
+        nullable: c.Null === 'YES'
+      })),
+      rowCount: count[0].total,
+      sampleData: sample
+    });
+    
+  } catch (err) {
+    console.error('Debug error:', err);
+    res.status(500).json({ error: err.message, code: err.code });
+  }
+});
+
+// Create products table if missing
+app.get('/debug/create-products-table', async (req, res) => {
+  try {
+    const sql = `
+      CREATE TABLE IF NOT EXISTS products (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        name VARCHAR(255) NOT NULL,
+        service_type VARCHAR(100),
+        container_type VARCHAR(100),
+        price DECIMAL(10,2) DEFAULT 0,
+        stocks INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+    
+    await db.query(sql);
+    
+    // Check if table is empty
+    const [count] = await db.query("SELECT COUNT(*) as total FROM products");
+    
+    if (count[0].total === 0) {
+      // Add sample products
+      await db.query(`
+        INSERT INTO products (name, service_type, container_type, price, stocks) VALUES
+        ('Mineral Water 500ml', 'water', 'bottle', 25.00, 100),
+        ('Purified Water Gallon', 'water', 'gallon', 80.00, 50),
+        ('Spring Water 1L', 'water', 'bottle', 40.00, 75),
+        ('Distilled Water', 'water', 'bottle', 30.00, 60),
+        ('Alkaline Water', 'water', 'bottle', 45.00, 40)
+      `);
+      
+      res.json({ 
+        success: true, 
+        message: 'Products table created with 5 sample products' 
+      });
+    } else {
+      res.json({ 
+        success: true, 
+        message: 'Products table already exists with ' + count[0].total + ' products' 
+      });
+    }
+    
+  } catch (err) {
+    console.error('Create table error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Add sample product via API
+app.post('/debug/add-sample-product', async (req, res) => {
+  try {
+    const sampleProduct = {
+      name: "Test Water Bottle",
+      service_type: "water",
+      container_type: "bottle",
+      price: 25,
+      stocks: 100
+    };
+    
+    const [result] = await db.query(
+      'INSERT INTO products (name, service_type, container_type, price, stocks) VALUES (?, ?, ?, ?, ?)',
+      [sampleProduct.name, sampleProduct.service_type, sampleProduct.container_type, sampleProduct.price, sampleProduct.stocks]
+    );
+    
+    res.json({
+      success: true,
+      message: 'Sample product added',
+      product: {
+        id: result.insertId,
+        ...sampleProduct
+      }
+    });
+    
+  } catch (err) {
+    console.error('Add sample error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Test database connection
+app.get('/debug/test-db', async (req, res) => {
+  try {
+    const connection = await db.getConnection();
+    
+    // Test query
+    const [result] = await connection.query('SELECT 1 + 1 AS solution');
+    
+    connection.release();
+    
+    res.json({
+      success: true,
+      message: 'Database connection successful',
+      testResult: result[0].solution,
+      database: 'sql12816262',
+      host: 'sql12.freesqldatabase.com'
+    });
+    
+  } catch (err) {
+    res.status(500).json({ 
+      error: err.message,
+      code: err.code,
+      suggestion: 'Check database credentials and connection'
+    });
+  }
+});
+
 // ========== SIMPLE WORKING FRONTEND SERVING ==========
 const frontendDistPath = path.join(__dirname, '../pos-frontend/dist');
 
