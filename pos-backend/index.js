@@ -1252,7 +1252,7 @@ app.get('/debug/companies', async (req, res) => {
 app.use(express.static(path.join(__dirname, '../pos-frontend')));
 
 // Catch-all route for SPA - FIXED: Only one instance
-app.get('*', (req, res) => {
+app.get('/:path(*)', (req, res) => {
   res.sendFile(path.join(__dirname, '../pos-frontend/index.html'));
 });
 
