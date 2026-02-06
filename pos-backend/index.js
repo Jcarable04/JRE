@@ -1257,32 +1257,15 @@ if (fs.existsSync(frontendPath)) {
   // Serve static files
   app.use(express.static(frontendPath));
   
-  // FIXED: Handle all routes EXCEPT API routes
-  // Define all API routes first
-  const apiRoutes = [
-    '/products', '/sales', '/companies', '/inventory',
-    '/debug', '/dashboard', '/sale-details', '/sales-test',
-    '/sales-history', '/sales-today', '/items'
-  ];
-  
-  // Handle SPA routing - FIXED: Use route with parameter name instead of regex
-  app.get('*', (req, res, next) => {
-    // Check if it's an API route
-    const isApiRoute = apiRoutes.some(route => req.path.startsWith(route));
-    
-    if (isApiRoute) {
-      return next(); // Let the API route handle it
-    }
-    
-    // Serve React app
+  // Serve index.html for root route
+  app.get('/', (req, res) => {
     res.sendFile(path.join(frontendPath, 'index.html'));
   });
   
 } else {
   console.log('⚠️ Frontend not found at:', frontendPath);
   
-  // FIXED: Simple catch-all route without regex
-  app.get('*', (req, res) => {
+  app.get('/', (req, res) => {
     res.json({ 
       message: 'Backend API is running',
       endpoints: {
