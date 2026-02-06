@@ -1249,6 +1249,7 @@ app.get('/debug/companies', async (req, res) => {
 });
 
 // ========== FIXED FRONTEND SERVING ==========
+// ========== ULTIMATE FIX ==========
 const frontendPath = path.join(__dirname, '../pos-frontend');
 
 if (fs.existsSync(frontendPath)) {
@@ -1257,16 +1258,31 @@ if (fs.existsSync(frontendPath)) {
   // Serve static files
   app.use(express.static(frontendPath));
   
-  // FIXED: Use /* instead of * to avoid path-to-regexp error
-  app.get('/*', function(req, res) {
+  // FIXED: Handle all routes EXCEPT API routes
+  // Define all API routes first
+  const apiRoutes = [
+    '/products', '/sales', '/companies', '/inventory',
+    '/debug', '/dashboard', '/sale-details', '/sales-test',
+    '/sales-history', '/sales-today', '/items'
+  ];
+  
+  // Handle SPA routing
+  app.get('*', function(req, res, next) {
+    // Check if it's an API route
+    const isApiRoute = apiRoutes.some(route => req.path.startsWith(route));
+    
+    if (isApiRoute) {
+      return next(); // Let the API route handle it
+    }
+    
+    // Serve React app
     res.sendFile(path.join(frontendPath, 'index.html'));
   });
   
 } else {
   console.log('⚠️ Frontend not found at:', frontendPath);
   
-  // Simple fallback
-  app.get('/*', function(req, res) {
+  app.get('*', function(req, res) {
     res.json({ 
       message: 'Backend API is running',
       endpoints: {
