@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
 const path = require('path');
+const fs = require('fs'); // Add this
 require('dotenv').config();
 
 const app = express();
@@ -10,10 +11,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// MySQL connection
+// MySQL connection - FIXED USERNAME
 const db = mysql.createPool({
   host: process.env.DB_HOST || 'sql12.freesqldatabase.com',
-  user: process.env.DB_USER || 'sql12816262',
+  user: 'sql12816262', // HARDCODE CORRECT USERNAME (without "i")
   password: process.env.DB_PASS || 'Lktrn6vVJs',
   database: process.env.DB_NAME || 'sql12816262',
   port: process.env.DB_PORT || 3306,
@@ -1247,14 +1248,58 @@ app.get('/debug/companies', async (req, res) => {
   }
 });
 
-// ========== FIXED CATCH-ALL ROUTE ==========
-// Serve frontend files
-app.use(express.static(path.join(__dirname, '../pos-frontend')));
+// ========== FIXED FRONTEND SERVING ==========
+const frontendPath = path.join(__dirname, '../pos-frontend');
 
-// FIX: Use a simple regex pattern that works with all Express versions
-app.get(/^\/(?!api|products|sales|companies|inventory|debug|dashboard|sale-details).*$/, (req, res) => {
-  res.sendFile(path.join(__dirname, '../pos-frontend/index.html'));
-});
+// Debug: Check if frontend exists
+if (fs.existsSync(frontendPath)) {
+  console.log('✅ Frontend found at:', frontendPath);
+  
+  // Serve static files
+  app.use(express.static(frontendPath));
+  
+  // SIMPLE CATCH-ALL ROUTE for SPA
+  app.get('*', (req, res, next) => {
+    // Check if it's an API route
+    const apiRoutes = [
+      '/products', '/sales', '/companies', '/inventory',
+      '/debug', '/dashboard', '/sale-details', '/sales-test',
+      '/sales-history', '/sales-today', '/items'
+    ];
+    
+    const isApiRoute = apiRoutes.some(route => req.path.startsWith(route));
+    
+    if (isApiRoute) {
+      return next(); // Let API routes handle it
+    }
+    
+    // Serve React app for all other routes
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+  
+} else {
+  console.log('⚠️ Frontend not found at:', frontendPath);
+  
+  // Fallback message
+  app.get('*', (req, res) => {
+    res.send(`
+      <html>
+        <head><title>POS System</title></head>
+        <body>
+          <h1>✅ Backend is Running</h1>
+          <p>Database connection fixed! Frontend files not found.</p>
+          <p>API endpoints:</p>
+          <ul>
+            <li><a href="/products">/products</a></li>
+            <li><a href="/sales">/sales</a></li>
+            <li><a href="/companies">/companies</a></li>
+            <li><a href="/debug/db-status">/debug/db-status</a></li>
+          </ul>
+        </body>
+      </html>
+    `);
+  });
+}
 
 // Start server
 const PORT = process.env.PORT || 10000;
@@ -1265,4 +1310,5 @@ app.listen(PORT, () => {
   console.log(`🏢 Inventory API: http://localhost:${PORT}/companies`);
   console.log(`🧪 Sales Test: http://localhost:${PORT}/sales-test`);
   console.log(`🔍 Check Tables: http://localhost:${PORT}/debug/db-status`);
+  console.log(`🌐 Frontend should be at: http://localhost:${PORT}`);
 });
