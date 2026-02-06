@@ -1249,62 +1249,37 @@ app.get('/debug/companies', async (req, res) => {
 });
 
 // ========== FIXED FRONTEND SERVING ==========
-// ========== CORRECT FRONTEND SERVING ==========
-const frontendDistPath = path.join(__dirname, '../pos-frontend/dist'); // Vue builds to 'dist'
-const frontendSourcePath = path.join(__dirname, '../pos-frontend');
+// ========== SIMPLE WORKING FRONTEND SERVING ==========
+const frontendDistPath = path.join(__dirname, '../pos-frontend/dist');
 
 console.log('🔍 Looking for Vue.js build at:', frontendDistPath);
 
 if (fs.existsSync(frontendDistPath)) {
   console.log('✅ Found Vue.js build at:', frontendDistPath);
   
-  // List files for debugging
-  const files = fs.readdirSync(frontendDistPath);
-  console.log('📁 Vue dist files:', files);
-  
-  // Serve static files from dist folder
+  // 1. Serve static files
   app.use(express.static(frontendDistPath));
   
-  // Handle Vue Router - serve index.html for all non-API routes
-  // FIXED: Use regex with parameter instead of plain '*'
-  app.get('*', (req, res, next) => {
-    // Skip API routes
-    if (req.path.startsWith('/api') || 
-        req.path === '/products' || req.path.startsWith('/products/') ||
-        req.path === '/sales' || req.path.startsWith('/sales/') ||
-        req.path === '/companies' || req.path.startsWith('/companies/') ||
-        req.path.startsWith('/debug') ||
-        req.path.startsWith('/inventory') ||
-        req.path === '/dashboard-stats' ||
-        req.path.startsWith('/sale-details') ||
-        req.path === '/sales-test' ||
-        req.path === '/sales-history' ||
-        req.path === '/sales-today' ||
-        req.path.startsWith('/items')) {
-      return next();
-    }
-    
-    // Serve Vue app
+  // 2. Only define specific routes
+  app.get('/', (req, res) => {
     res.sendFile(path.join(frontendDistPath, 'index.html'));
   });
   
+  // 3. DO NOT use app.get('*', 
+  // Vue's history mode or hash mode will handle routing on client-side
+  
 } else {
   console.log('❌ Vue.js dist folder not found');
-  console.log('✅ Source folder found at:', frontendSourcePath);
   
-  // Serve API info
   app.get('/', (req, res) => {
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-      <head><title>POS System</title><style>body{font-family:Arial;margin:40px}</style></head>
-      <body>
-        <h1>🚀 POS Backend Running</h1>
-        <p>Vue.js frontend needs to be built.</p>
-        <p><a href="/products">Test API: /products</a></p>
-      </body>
-      </html>
-    `);
+    res.json({ 
+      message: 'POS Backend API running',
+      endpoints: {
+        products: '/products',
+        companies: '/companies',
+        debug: '/debug/db-status'
+      }
+    });
   });
 }
 
