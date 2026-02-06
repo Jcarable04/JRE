@@ -1249,7 +1249,6 @@ app.get('/debug/companies', async (req, res) => {
 });
 
 // ========== FIXED FRONTEND SERVING ==========
-// ========== ULTIMATE FIX ==========
 const frontendPath = path.join(__dirname, '../pos-frontend');
 
 if (fs.existsSync(frontendPath)) {
@@ -1266,8 +1265,8 @@ if (fs.existsSync(frontendPath)) {
     '/sales-history', '/sales-today', '/items'
   ];
   
-  // Handle SPA routing - FIXED: Use regex pattern instead of plain '*'
-  app.get('/(.*)', function(req, res, next) {
+  // Handle SPA routing - FIXED: Use route with parameter name instead of regex
+  app.get('*', (req, res, next) => {
     // Check if it's an API route
     const isApiRoute = apiRoutes.some(route => req.path.startsWith(route));
     
@@ -1282,8 +1281,8 @@ if (fs.existsSync(frontendPath)) {
 } else {
   console.log('⚠️ Frontend not found at:', frontendPath);
   
-  // FIXED: Use regex pattern instead of plain '*'
-  app.get('/(.*)', function(req, res) {
+  // FIXED: Simple catch-all route without regex
+  app.get('*', (req, res) => {
     res.json({ 
       message: 'Backend API is running',
       endpoints: {
