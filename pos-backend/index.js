@@ -85,7 +85,133 @@ app.get('/products', async (req, res) => {
     });
   }
 });
+// Create all core tables
+const createCoreTables = async () => {
+  try {
+    console.log('🛠️ Creating core database tables...');
+    
+    // 1. Products table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS products (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        name VARCHAR(255) NOT NULL,
+        service_type VARCHAR(100),
+        container_type VARCHAR(100),
+        price DECIMAL(10,2) DEFAULT 0,
+        stocks INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('✅ Created products table');
+    
+    // 2. Sales table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS sales (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        customer_name VARCHAR(255) NOT NULL,
+        customer_address TEXT,
+        total_amount DECIMAL(10,2) DEFAULT 0,
+        status VARCHAR(50) DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('✅ Created sales table');
+    
+    // 3. Sale_items table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS sale_items (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        sale_id INT NOT NULL,
+        product_id INT NOT NULL,
+        product_name VARCHAR(255),
+        quantity INT DEFAULT 1,
+        unit_price DECIMAL(10,2) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE,
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+      )
+    `);
+    console.log('✅ Created sale_items table');
+    
+    // 4. Companies table (already in createInventoryTables)
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS companies (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255),
+        phone VARCHAR(50),
+        address TEXT,
+        notes TEXT,
+        item_count INT DEFAULT 0,
+        stock_status VARCHAR(50) DEFAULT 'Good',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('✅ Created companies table');
+    
+    // 5. Company_inventory table (rename from inventory_items)
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS company_inventory (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        company_id INT NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        category VARCHAR(100),
+        quantity DECIMAL(10,2) DEFAULT 0,
+        unit VARCHAR(50) DEFAULT 'pcs',
+        unit_price DECIMAL(10,2) DEFAULT 0,
+        description TEXT,
+        sku VARCHAR(100),
+        low_stock_threshold DECIMAL(10,2) DEFAULT 10,
+        last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+      )
+    `);
+    console.log('✅ Created company_inventory table');
+    
+    // 6. Stock_history table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS stock_history (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        item_id INT NOT NULL,
+        action VARCHAR(50),
+        quantity_change DECIMAL(10,2),
+        new_quantity DECIMAL(10,2),
+        reason VARCHAR(100),
+        notes TEXT,
+        created_by VARCHAR(100),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (item_id) REFERENCES company_inventory(id) ON DELETE CASCADE
+      )
+    `);
+    console.log('✅ Created stock_history table');
+    
+    // 7. Stock_movements table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS stock_movements (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        inventory_id INT NOT NULL,
+        movement_type ENUM('IN','OUT','ADJUST'),
+        quantity DECIMAL(10,2),
+        reference_number VARCHAR(50),
+        notes TEXT,
+        created_by VARCHAR(100),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (inventory_id) REFERENCES company_inventory(id) ON DELETE CASCADE
+      )
+    `);
+    console.log('✅ Created stock_movements table');
+    
+    console.log('🎉 All 7 tables created successfully!');
+    
+  } catch (err) {
+    console.error('❌ Error creating tables:', err.message);
+  }
+};
 
+// Call this function on startup
+createCoreTables();
 // SIMPLIFIED CHECKOUT - TEST VERSION
 app.post('/sales-test', async (req, res) => {
   console.log('\n🔵 ========== TEST CHECKOUT CALLED ==========');
