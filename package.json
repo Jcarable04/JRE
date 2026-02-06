@@ -4,12 +4,6 @@
   "scripts": {
     "start": "cd pos-backend && yarn start",
     "build": "cd pos-frontend && npm install && npm run build",
-    "install": "npm run install:backend && npm run install:frontend",
-    "install:backend": "cd pos-backend && yarn",
-    "install:frontend": "cd pos-frontend && npm install",
-    "dev": "concurrently \"cd pos-backend && yarn dev\" \"cd pos-frontend && npm start\""
-  },
-  "devDependencies": {
-    "concurrently": "^8.2.2"
+    "install": "cd pos-backend && yarn && cd ../pos-frontend && npm install"
   }
 }
